@@ -2,7 +2,9 @@ package gecko10000.geckopipes
 
 import gecko10000.geckoanvils.di.MyKoinComponent
 import gecko10000.geckolib.blockdata.BlockDataManager
+import gecko10000.geckolib.misc.Task
 import gecko10000.geckopipes.config.PipeEndData
+import gecko10000.geckopipes.guis.PipeEndGUI
 import gecko10000.geckopipes.model.PipeEnd
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -27,6 +29,7 @@ import org.koin.core.component.inject
 import java.util.*
 import java.util.function.Predicate
 import kotlin.math.PI
+import kotlin.random.Random
 
 class PipeEndManager : MyKoinComponent, Listener {
 
@@ -34,7 +37,7 @@ class PipeEndManager : MyKoinComponent, Listener {
     private val json: Json by inject()
 
     private val bdm = BlockDataManager("pipe", PersistentDataType.STRING, false)
-    private val loadedPipeEnds = mutableMapOf<Block, PipeEnd>()
+    val loadedPipeEnds = mutableMapOf<Block, PipeEnd>()
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
@@ -94,6 +97,12 @@ class PipeEndManager : MyKoinComponent, Listener {
             }
     }
 
+    private fun Matrix4f.addRandomization(): Matrix4f {
+        val rand = Random.nextFloat() * EPSILON - EPSILON / 2
+        return this.scale(Vector3f(1f + rand))
+            .translate(Vector3f(-rand))
+    }
+
     private fun updateDisplay(block: Block): Set<UUID> {
         val existing = loadedPipeEnds[block]
         val pipeEndData = getPipeInfo(block) ?: return emptySet()
@@ -102,7 +111,9 @@ class PipeEndManager : MyKoinComponent, Listener {
             it.isPersistent = false
         }
         cauldron.block = Material.CAULDRON.createBlockData()
-        cauldron.setTransformationMatrix(matrixMappings.getValue(pipeEndData.direction))
+        cauldron.setTransformationMatrix(
+            matrixMappings.getValue(pipeEndData.direction).addRandomization()
+        )
 
         val existingIndicator = existing?.let {
             getDisplayByPredicate(existing.displays, {
@@ -127,7 +138,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         bdm.getValuedBlocks(chunk).forEach { block ->
             val displays = updateDisplay(block)
             val data = getPipeInfo(block)!!
-            loadedPipeEnds[block] = PipeEnd(data, displays)
+            loadedPipeEnds[block] = PipeEnd(block, data, displays)
         }
     }
 
@@ -143,11 +154,22 @@ class PipeEndManager : MyKoinComponent, Listener {
         // Only pipe ends
         if (!this.itemInHand.persistentDataContainer.has(plugin.pipeEndKey)) return
         val direction = getPlacedFace(player)
-        this.blockPlaced.type = Material.BARRIER
         val pipeInfo = PipeEndData(direction)
         bdm[this.blockPlaced] = json.encodeToString(pipeInfo)
         val displays = updateDisplay(this.blockPlaced)
-        loadedPipeEnds[this.blockPlaced] = PipeEnd(pipeInfo, displays)
+        loadedPipeEnds[this.blockPlaced] = PipeEnd(this.blockPlaced, pipeInfo, displays)
+        // Otherwise you get a POI data mismatch, probably because server
+        // expects a cauldron after the place event is complete.
+        Task.syncDelayed { ->
+            this.blockPlaced.type = Material.BARRIER
+        }
+    }
+
+    fun updateData(pipeEnd: PipeEnd, block: (PipeEndData) -> PipeEndData) {
+        val newData = block(pipeEnd.data)
+        bdm[pipeEnd.block] = json.encodeToString(newData)
+        val newDisplays = updateDisplay(pipeEnd.block)
+        loadedPipeEnds[pipeEnd.block] = pipeEnd.copy(data = newData, displays = newDisplays)
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -162,10 +184,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         // and not a shift click
         if (player.isSneaking) return
         this.isCancelled = true
-        val newData = pipe.data.copy(isOutput = !pipe.data.isOutput)
-        bdm[clickedBlock] = json.encodeToString(newData)
-        val newDisplays = updateDisplay(clickedBlock)
-        loadedPipeEnds[clickedBlock] = PipeEnd(newData, newDisplays)
+        PipeEndGUI.getOrCreate(clickedBlock).gui.open(player)
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -178,9 +197,13 @@ class PipeEndManager : MyKoinComponent, Listener {
         this.isCancelled = true
         clickedBlock.type = Material.AIR
         bdm.remove(clickedBlock)
+        // Remove displays
         pipe.displays.forEach {
             clickedBlock.world.getEntity(it)?.remove()
         }
+        // Close any open invs
+        PipeEndGUI.openGUIs[clickedBlock]?.gui?.inventory?.close()
+        // Drop item
         clickedBlock.world.dropItemNaturally(clickedBlock.location.toCenterLocation(), plugin.pipeItem())
     }
 
