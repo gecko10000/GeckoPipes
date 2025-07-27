@@ -15,4 +15,5 @@ data class PipeEndData(
     val isOutput: Boolean = false,
     val isWhitelist: Boolean = false,
     val filter: List<ItemStack> = listOf(),
+    val isExactMatch: Boolean = false,
 )

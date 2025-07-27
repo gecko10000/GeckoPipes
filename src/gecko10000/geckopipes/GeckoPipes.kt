@@ -3,6 +3,7 @@ package gecko10000.geckopipes
 import gecko10000.geckoanvils.di.MyKoinContext
 import gecko10000.geckolib.config.YamlFileManager
 import gecko10000.geckopipes.config.Config
+import gecko10000.geckopipes.guis.PipeEndGUIListener
 import io.papermc.paper.datacomponent.DataComponentTypes
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -25,6 +26,7 @@ class GeckoPipes : JavaPlugin() {
     override fun onEnable() {
         MyKoinContext.init(this)
         CommandHandler().register()
+        PipeEndGUIListener()
     }
 
     fun pipeItem(): ItemStack {

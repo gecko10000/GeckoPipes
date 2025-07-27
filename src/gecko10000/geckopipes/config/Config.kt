@@ -14,4 +14,5 @@ data class Config(
     val inputDisplayMaterial: Material = Material.LIGHT_BLUE_CONCRETE,
     val outputDisplayMaterial: Material = Material.ORANGE_CONCRETE,
     val pipeGUIName: Component = MM.deserialize("<dark_green>Pipe Menu"),
+    val maxFilterItems: Int = 9,
 )

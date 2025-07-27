@@ -97,8 +97,8 @@ class PipeEndManager : MyKoinComponent, Listener {
             }
     }
 
-    private fun Matrix4f.addRandomization(): Matrix4f {
-        val rand = Random.nextFloat() * EPSILON - EPSILON / 2
+    private fun Matrix4f.addRandomization(random: Random): Matrix4f {
+        val rand = random.nextFloat() * EPSILON - EPSILON / 2
         return this.scale(Vector3f(1f + rand))
             .translate(Vector3f(-rand))
     }
@@ -111,8 +111,12 @@ class PipeEndManager : MyKoinComponent, Listener {
             it.isPersistent = false
         }
         cauldron.block = Material.CAULDRON.createBlockData()
+        // Just some primes
+        val seed = block.location.blockX * 37 + block.location.blockY * 113 + block.location.blockZ * 83
+        val random = Random(seed)
+        val matrix = matrixMappings.getValue(pipeEndData.direction)
         cauldron.setTransformationMatrix(
-            matrixMappings.getValue(pipeEndData.direction).addRandomization()
+            Matrix4f(matrix).addRandomization(random)
         )
 
         val existingIndicator = existing?.let {
