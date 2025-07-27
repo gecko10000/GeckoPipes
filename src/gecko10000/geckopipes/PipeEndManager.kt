@@ -19,11 +19,13 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
+import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.persistence.PersistentDataType
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.koin.core.component.inject
 import java.util.*
+import java.util.function.Predicate
 import kotlin.math.PI
 
 class PipeEndManager : MyKoinComponent, Listener {
@@ -83,19 +85,31 @@ class PipeEndManager : MyKoinComponent, Listener {
         )
     }
 
+    private fun getDisplayByPredicate(set: Set<UUID>, predicate: Predicate<Material>): BlockDisplay? {
+        return set
+            .map { plugin.server.getEntity(it) }
+            .filterIsInstance<BlockDisplay>()
+            .firstOrNull {
+                predicate.test(it.block.material)
+            }
+    }
+
     private fun updateDisplay(block: Block): Set<UUID> {
-        // Remove previous
-        loadedPipeEnds[block]?.displays?.forEach {
-            block.world.getEntity(it)?.remove()
-        }
+        val existing = loadedPipeEnds[block]
         val pipeEndData = getPipeInfo(block) ?: return emptySet()
-        val cauldron = block.world.spawn(block.location, BlockDisplay::class.java) {
+        val existingCauldron = existing?.let { getDisplayByPredicate(existing.displays, { it == Material.CAULDRON }) }
+        val cauldron = existingCauldron ?: block.world.spawn(block.location, BlockDisplay::class.java) {
             it.isPersistent = false
         }
         cauldron.block = Material.CAULDRON.createBlockData()
         cauldron.setTransformationMatrix(matrixMappings.getValue(pipeEndData.direction))
 
-        val indicator = block.world.spawn(block.location, BlockDisplay::class.java) {
+        val existingIndicator = existing?.let {
+            getDisplayByPredicate(existing.displays, {
+                it == plugin.config.inputDisplayMaterial || it == plugin.config.outputDisplayMaterial
+            })
+        }
+        val indicator = existingIndicator ?: block.world.spawn(block.location, BlockDisplay::class.java) {
             it.isPersistent = false
         }
         val indicatorMaterial =
@@ -106,7 +120,6 @@ class PipeEndManager : MyKoinComponent, Listener {
                 .translate(Vector3f(EPSILON / 2))
                 .scale(Vector3f(1f - EPSILON))
         )
-
         return setOf(cauldron, indicator).map { it.uniqueId }.toSet()
     }
 
@@ -141,6 +154,8 @@ class PipeEndManager : MyKoinComponent, Listener {
     private fun PlayerInteractEvent.onUpdatePipeEndDirection() {
         // Right clicks on blocks
         if (this.action != Action.RIGHT_CLICK_BLOCK) return
+        // with your main hand
+        if (this.hand != EquipmentSlot.HAND) return
         val clickedBlock = this.clickedBlock ?: return
         // that are pipe ends
         val pipe = loadedPipeEnds[clickedBlock] ?: return
