@@ -2,6 +2,7 @@
 
 package gecko10000.geckopipes.config
 
+import com.destroystokyo.paper.MaterialTags
 import gecko10000.geckolib.config.serializers.MMComponentSerializer
 import gecko10000.geckolib.extensions.MM
 import kotlinx.serialization.Serializable
@@ -15,4 +16,6 @@ data class Config(
     val outputDisplayMaterial: Material = Material.ORANGE_CONCRETE,
     val pipeGUIName: Component = MM.deserialize("<dark_green>Pipe Menu"),
     val maxFilterItems: Int = 9,
+    val pipeBlocks: Set<Material> = MaterialTags.STAINED_GLASS.values,
+    val pipeMoveInterval: Long = 20,
 )

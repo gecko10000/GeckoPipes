@@ -37,7 +37,9 @@ class PipeEndManager : MyKoinComponent, Listener {
     private val json: Json by inject()
 
     private val bdm = BlockDataManager("pipe", PersistentDataType.STRING, false)
-    val loadedPipeEnds = mutableMapOf<Block, PipeEnd>()
+    private val internalPipeEnds = mutableMapOf<Block, PipeEnd>()
+    val loadedPipeEnds: Map<Block, PipeEnd>
+        get() = internalPipeEnds
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
@@ -104,7 +106,7 @@ class PipeEndManager : MyKoinComponent, Listener {
     }
 
     private fun updateDisplay(block: Block): Set<UUID> {
-        val existing = loadedPipeEnds[block]
+        val existing = internalPipeEnds[block]
         val pipeEndData = getPipeInfo(block) ?: return emptySet()
         val existingCauldron = existing?.let { getDisplayByPredicate(existing.displays, { it == Material.CAULDRON }) }
         val cauldron = existingCauldron ?: block.world.spawn(block.location, BlockDisplay::class.java) {
@@ -142,7 +144,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         bdm.getValuedBlocks(chunk).forEach { block ->
             val displays = updateDisplay(block)
             val data = getPipeInfo(block)!!
-            loadedPipeEnds[block] = PipeEnd(block, data, displays)
+            internalPipeEnds[block] = PipeEnd(block, data, displays)
         }
     }
 
@@ -161,7 +163,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         val pipeInfo = PipeEndData(direction)
         bdm[this.blockPlaced] = json.encodeToString(pipeInfo)
         val displays = updateDisplay(this.blockPlaced)
-        loadedPipeEnds[this.blockPlaced] = PipeEnd(this.blockPlaced, pipeInfo, displays)
+        internalPipeEnds[this.blockPlaced] = PipeEnd(this.blockPlaced, pipeInfo, displays)
         // Otherwise you get a POI data mismatch, probably because server
         // expects a cauldron after the place event is complete.
         Task.syncDelayed { ->
@@ -173,7 +175,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         val newData = block(pipeEnd.data)
         bdm[pipeEnd.block] = json.encodeToString(newData)
         val newDisplays = updateDisplay(pipeEnd.block)
-        loadedPipeEnds[pipeEnd.block] = pipeEnd.copy(data = newData, displays = newDisplays)
+        internalPipeEnds[pipeEnd.block] = pipeEnd.copy(data = newData, displays = newDisplays)
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -184,7 +186,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         if (this.hand != EquipmentSlot.HAND) return
         val clickedBlock = this.clickedBlock ?: return
         // that are pipe ends
-        val pipe = loadedPipeEnds[clickedBlock] ?: return
+        val pipe = internalPipeEnds[clickedBlock] ?: return
         // and not a shift click
         if (player.isSneaking) return
         this.isCancelled = true
@@ -197,7 +199,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         if (this.action != Action.LEFT_CLICK_BLOCK) return
         val clickedBlock = this.clickedBlock ?: return
         // that are pipe ends
-        val pipe = loadedPipeEnds.remove(clickedBlock) ?: return
+        val pipe = internalPipeEnds.remove(clickedBlock) ?: return
         this.isCancelled = true
         clickedBlock.type = Material.AIR
         bdm.remove(clickedBlock)
