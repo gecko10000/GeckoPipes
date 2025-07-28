@@ -151,7 +151,7 @@ class PipeEndGUI private constructor(private val block: Block) : MyKoinComponent
         gui.addButton(FILTER_SLOT, filterButton())
         gui.addButton(EXACT_MATCH_SLOT, exactMatchButton())
         FILTER_ITEM_SLOTS.forEachIndexed { index, slot ->
-            val filterItem = pipeEnd.data.filter.getOrNull(index)
+            val filterItem = pipeEnd.data.filter.getOrNull(pipeEnd.data.filter.size - 1 - index)
             gui.inventory.setItem(slot, filterItem)
         }
     }
