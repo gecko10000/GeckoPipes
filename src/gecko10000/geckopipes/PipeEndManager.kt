@@ -21,7 +21,7 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
-import org.bukkit.event.world.ChunkUnloadEvent
+import org.bukkit.event.world.EntitiesUnloadEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.persistence.PersistentDataType
 import org.joml.Matrix4f
@@ -110,7 +110,8 @@ class PipeEndManager : MyKoinComponent, Listener {
     private fun updateDisplay(block: Block): Set<UUID> {
         val existing = internalPipeEnds[block]
         val pipeEndData = getPipeInfo(block) ?: return emptySet()
-        val existingCauldron = existing?.let { getDisplayByPredicate(existing.displays, { it == Material.CAULDRON }) }
+        val existingCauldron =
+            existing?.let { getDisplayByPredicate(existing.displays, { it == Material.CAULDRON }) }
         val cauldron = existingCauldron ?: block.world.spawn(block.location, BlockDisplay::class.java) {
             it.isPersistent = false
         }
@@ -144,6 +145,7 @@ class PipeEndManager : MyKoinComponent, Listener {
 
     private fun loadChunk(chunk: Chunk) {
         bdm.getValuedBlocks(chunk).forEach { block ->
+            if (internalPipeEnds[block] != null) return@forEach
             val displays = updateDisplay(block)
             val data = getPipeInfo(block)!!
             internalPipeEnds[block] = PipeEnd(block, data, displays)
@@ -216,11 +218,17 @@ class PipeEndManager : MyKoinComponent, Listener {
     }
 
     @EventHandler
-    private fun ChunkLoadEvent.onChunkLoad() = loadChunk(this.chunk)
+    private fun ChunkLoadEvent.onChunkLoad() = loadChunk(chunk)
 
     @EventHandler
-    private fun ChunkUnloadEvent.onChunkUnload() {
-        bdm.getValuedBlocks(chunk).forEach { internalPipeEnds.remove(it) }
+    private fun EntitiesUnloadEvent.onChunkUnload() {
+        bdm.getValuedBlocks(chunk).forEach {
+            internalPipeEnds.remove(it)?.displays?.forEach { dId ->
+                // DOES NOT WORK
+                // plugin.server.getEntity(dId)?.remove()
+                entities.find { it.uniqueId == dId }?.remove()
+            }
+        }
     }
 
 }

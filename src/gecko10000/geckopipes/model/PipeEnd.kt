@@ -7,5 +7,5 @@ import java.util.*
 data class PipeEnd(
     val block: Block,
     val data: PipeEndData,
-    val displays: Set<UUID>
+    val displays: Set<UUID>,
 )

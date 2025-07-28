@@ -30,8 +30,6 @@ class PipeEndGUI private constructor(private val block: Block) : MyKoinComponent
             30, 31, 32,
         )
 
-        private val MAX_FILTER_ITEMS = FILTER_ITEM_SLOTS.size
-
         val openGUIs: MutableMap<Block, PipeEndGUI> = mutableMapOf()
         fun getOrCreate(block: Block): PipeEndGUI {
             openGUIs[block]?.let { return it }
