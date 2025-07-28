@@ -21,12 +21,14 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
+import org.bukkit.event.world.ChunkUnloadEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.persistence.PersistentDataType
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.koin.core.component.inject
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 import kotlin.math.PI
 import kotlin.random.Random
@@ -37,7 +39,7 @@ class PipeEndManager : MyKoinComponent, Listener {
     private val json: Json by inject()
 
     private val bdm = BlockDataManager("pipe", PersistentDataType.STRING, false)
-    private val internalPipeEnds = mutableMapOf<Block, PipeEnd>()
+    private val internalPipeEnds = ConcurrentHashMap<Block, PipeEnd>()
     val loadedPipeEnds: Map<Block, PipeEnd>
         get() = internalPipeEnds
 
@@ -215,5 +217,10 @@ class PipeEndManager : MyKoinComponent, Listener {
 
     @EventHandler
     private fun ChunkLoadEvent.onChunkLoad() = loadChunk(this.chunk)
+
+    @EventHandler
+    private fun ChunkUnloadEvent.onChunkUnload() {
+        bdm.getValuedBlocks(chunk).forEach { internalPipeEnds.remove(it) }
+    }
 
 }
