@@ -29,6 +29,10 @@ class GeckoPipes : JavaPlugin() {
         PipeEndGUIListener()
     }
 
+    fun reloadConfigs() {
+        configFile.reload()
+    }
+
     fun pipeItem(): ItemStack {
         val item = ItemStack.of(Material.CAULDRON)
         item.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)

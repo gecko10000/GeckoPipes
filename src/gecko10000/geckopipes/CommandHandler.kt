@@ -47,4 +47,11 @@ class CommandHandler : MyKoinComponent {
         give(sender, target)
     }
 
+    @Executes("reload")
+    @Permission("geckopipes.reload")
+    fun reload(sender: CommandSender) {
+        plugin.reloadConfigs()
+        sender.sendRichMessage("<green>Config reloaded.")
+    }
+
 }
