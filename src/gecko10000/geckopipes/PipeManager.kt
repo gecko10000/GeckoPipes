@@ -64,6 +64,8 @@ class PipeManager : MyKoinComponent, Listener {
             // Output accepts item
             if (!endAcceptsItem(remaining, pipeEnd.data)) continue
             val outputBlock = output.getRelative(pipeEnd.data.direction)
+            // Moving to self, succeed.
+            if (inputBlock == outputBlock) break
             // Ensure it's an inventory
             val outputInventory = (outputBlock.getState(false) as? InventoryHolder)?.inventory ?: continue
             val leftover = outputInventory.addItem(remaining).values.firstOrNull()
