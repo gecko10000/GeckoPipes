@@ -5,17 +5,22 @@ import gecko10000.geckolib.extensions.isEmpty
 import gecko10000.geckolib.misc.Task
 import gecko10000.geckopipes.config.PipeEndData
 import gecko10000.geckopipes.model.PipeEnd
+import gecko10000.storagepots.PotManager
+import gecko10000.storagepots.model.Pot
 import org.bukkit.block.Block
 import org.bukkit.event.Listener
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.koin.core.component.inject
+import kotlin.math.min
 
 class PipeManager : MyKoinComponent, Listener {
 
     private val plugin: GeckoPipes by inject()
     private val pipeEndManager: PipeEndManager by inject()
+
+    private val isStoragePotsEnabled by lazy { plugin.server.pluginManager.isPluginEnabled("StoragePots") }
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
@@ -51,13 +56,8 @@ class PipeManager : MyKoinComponent, Listener {
         return -1
     }
 
-    private fun moveItems(inputEnd: PipeEnd, outputs: List<Block>) {
-        val inputBlock = inputEnd.block.getRelative(inputEnd.data.direction)
-        val inputInventory = (inputBlock.getState(false) as? InventoryHolder)?.inventory ?: return
-        val slotToMove = firstAcceptableItem(inputInventory, inputEnd.data)
-        if (slotToMove == -1) return
-        val original = inputInventory.getItem(slotToMove)?.clone() ?: return
-        var remaining = original.clone()
+    private fun transferToOutputs(inputBlock: Block, item: ItemStack, outputs: List<Block>): Int {
+        var remaining = item.clone()
         var allMoved = false
         for (output in outputs) {
             val pipeEnd = pipeEndManager.loadedPipeEnds[output] ?: continue
@@ -66,6 +66,19 @@ class PipeManager : MyKoinComponent, Listener {
             val outputBlock = output.getRelative(pipeEnd.data.direction)
             // Moving to self, succeed.
             if (inputBlock == outputBlock) break
+            if (isStoragePotsEnabled) {
+                val pot = PotManager.instance.getPot(outputBlock)
+                if (pot != null) {
+                    val leftover = PotManager.instance.tryAdd(pot, remaining)
+                    if (leftover == 0) {
+                        allMoved = true
+                        break
+                    } else {
+                        remaining = remaining.asQuantity(leftover)
+                        continue
+                    }
+                }
+            }
             // Ensure it's an inventory
             val outputInventory = (outputBlock.getState(false) as? InventoryHolder)?.inventory ?: continue
             val leftover = outputInventory.addItem(remaining).values.firstOrNull()
@@ -75,9 +88,36 @@ class PipeManager : MyKoinComponent, Listener {
             }
             remaining = leftover
         }
+        return if (allMoved) 0 else remaining.amount
+    }
+
+    private fun moveItemsFromPot(inputEnd: PipeEnd, outputs: List<Block>, pot: Pot) {
+        val potItem = pot.info.item
+        if (potItem == null || pot.info.amount == 0L) return
+        val canMove = endAcceptsItem(potItem, inputEnd.data)
+        if (!canMove) return
+        val originalAmount = min(potItem.maxStackSize, pot.info.amount.toInt())
+        val original = potItem.asQuantity(originalAmount)
+        val leftoverAmount = transferToOutputs(pot.block, original, outputs)
+        PotManager.instance.remove(pot, originalAmount - leftoverAmount)
+    }
+
+    private fun moveItems(inputEnd: PipeEnd, outputs: List<Block>) {
+        val inputBlock = inputEnd.block.getRelative(inputEnd.data.direction)
+        if (isStoragePotsEnabled) {
+            val pot = PotManager.instance.getPot(inputBlock)
+            if (pot != null) {
+                moveItemsFromPot(inputEnd, outputs, pot)
+                return
+            }
+        }
+        val inputInventory = (inputBlock.getState(false) as? InventoryHolder)?.inventory ?: return
+        val slotToMove = firstAcceptableItem(inputInventory, inputEnd.data)
+        if (slotToMove == -1) return
+        val original = inputInventory.getItem(slotToMove)?.clone() ?: return
+        val leftover = transferToOutputs(inputBlock, original, outputs)
         inputInventory.setItem(
-            slotToMove, if (allMoved) inputInventory.getItem(slotToMove)?.add(-original.amount) else
-                remaining
+            slotToMove, original.asQuantity(leftover)
         )
     }
 

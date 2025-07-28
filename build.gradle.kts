@@ -40,6 +40,7 @@ dependencies {
     compileOnly(kotlin("stdlib", version = "2.2.0"))
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     compileOnly("gecko10000.geckolib:GeckoLib:1.1")
+    compileOnly("gecko10000.storagepots:StoragePots:0.1")
     compileOnly("net.strokkur", "strokk-commands-annotations", "1.2.4-SNAPSHOT")
     kapt("net.strokkur", "strokk-commands-processor", "1.2.4-SNAPSHOT")
 }
