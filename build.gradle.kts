@@ -30,8 +30,6 @@ bukkit {
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
-    maven("https://redempt.dev/")
-    maven("https://repo.nexomc.com/releases")
     maven("https://eldonexus.de/repository/maven-public/")
     mavenLocal()
 }
