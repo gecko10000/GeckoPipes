@@ -17,6 +17,7 @@ import org.koin.core.component.inject
 class CommandHandler : MyKoinComponent {
 
     private val plugin: GeckoPipes by inject()
+    private val pipeEndManager: PipeEndManager by inject()
 
     fun register() {
         plugin.lifecycleManager
@@ -28,7 +29,7 @@ class CommandHandler : MyKoinComponent {
     }
 
     private fun give(sender: CommandSender, target: Player) {
-        target.give(plugin.pipeItem())
+        target.give(pipeEndManager.pipeItem())
     }
 
     @Executes("give")

@@ -6,10 +6,13 @@ import gecko10000.geckolib.misc.Task
 import gecko10000.geckopipes.config.PipeEndData
 import gecko10000.geckopipes.guis.PipeEndGUI
 import gecko10000.geckopipes.model.PipeEnd
+import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.datacomponent.item.ItemLore
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.bukkit.Chunk
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.BlockDisplay
@@ -23,6 +26,7 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.EntitiesUnloadEvent
 import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.joml.Matrix4f
 import org.joml.Vector3f
@@ -162,7 +166,7 @@ class PipeEndManager : MyKoinComponent, Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     private fun BlockPlaceEvent.onPlacePipeEnd() {
         // Only pipe ends
-        if (!this.itemInHand.persistentDataContainer.has(plugin.pipeEndKey)) return
+        if (!this.itemInHand.persistentDataContainer.has(pipeEndKey)) return
         val direction = getPlacedFace(player)
         val pipeInfo = PipeEndData(direction)
         bdm[this.blockPlaced] = json.encodeToString(pipeInfo)
@@ -214,7 +218,7 @@ class PipeEndManager : MyKoinComponent, Listener {
         // Close any open invs
         PipeEndGUI.openGUIs[clickedBlock]?.gui?.inventory?.close()
         // Drop item
-        clickedBlock.world.dropItemNaturally(clickedBlock.location.toCenterLocation(), plugin.pipeItem())
+        clickedBlock.world.dropItemNaturally(clickedBlock.location.toCenterLocation(), pipeItem())
     }
 
     @EventHandler
@@ -229,6 +233,19 @@ class PipeEndManager : MyKoinComponent, Listener {
                 entities.find { it.uniqueId == dId }?.remove()
             }
         }
+    }
+
+
+    private val pipeEndKey by lazy { NamespacedKey(plugin, "pipe_end") }
+    fun pipeItem(): ItemStack {
+        val item = ItemStack.of(Material.CAULDRON)
+        item.setData(DataComponentTypes.ITEM_NAME, plugin.config.pipeItemName)
+        item.setData(DataComponentTypes.LORE, ItemLore.lore(plugin.config.pipeItemLore))
+        item.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
+        item.editPersistentDataContainer {
+            it.set(pipeEndKey, PersistentDataType.BOOLEAN, true)
+        }
+        return item
     }
 
 }

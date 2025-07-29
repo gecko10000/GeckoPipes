@@ -56,7 +56,12 @@ class PipeManager : MyKoinComponent, Listener {
         return -1
     }
 
-    private fun transferToOutputs(inputBlock: Block, item: ItemStack, outputs: List<Block>): Int {
+    // inputInventory: used to compare with output, in case we're moving to the same place.
+    // Necessary for double chests, where comparing the block is not enough.
+    private fun transferToOutputs(
+        inputBlock: Block, inputInventory: Inventory?, item: ItemStack, outputs:
+        List<Block>
+    ): Int {
         var remaining = item.clone()
         var allMoved = false
         for (output in outputs) {
@@ -65,7 +70,11 @@ class PipeManager : MyKoinComponent, Listener {
             if (!endAcceptsItem(remaining, pipeEnd.data)) continue
             val outputBlock = output.getRelative(pipeEnd.data.direction)
             // Moving to self, succeed.
-            if (inputBlock == outputBlock) break
+            // But don't set allMoved, because the leftover
+            // is being kept in the chest.
+            if (inputBlock == outputBlock) {
+                break
+            }
             if (isStoragePotsEnabled) {
                 val pot = PotManager.instance.getPot(outputBlock)
                 if (pot != null) {
@@ -81,6 +90,11 @@ class PipeManager : MyKoinComponent, Listener {
             }
             // Ensure it's an inventory
             val outputInventory = (outputBlock.getState(false) as? InventoryHolder)?.inventory ?: continue
+            // If different ends of double chest, skip
+            // TODO: fix?
+            if (inputInventory?.getHolder(false) == outputInventory.getHolder(false)) {
+                break
+            }
             val leftover = outputInventory.addItem(remaining).values.firstOrNull()
             if (leftover == null) {
                 allMoved = true
@@ -98,7 +112,7 @@ class PipeManager : MyKoinComponent, Listener {
         if (!canMove) return
         val originalAmount = min(potItem.maxStackSize, pot.info.amount.toInt())
         val original = potItem.asQuantity(originalAmount)
-        val leftoverAmount = transferToOutputs(pot.block, original, outputs)
+        val leftoverAmount = transferToOutputs(pot.block, null, original, outputs)
         PotManager.instance.remove(pot, originalAmount - leftoverAmount)
     }
 
@@ -115,7 +129,7 @@ class PipeManager : MyKoinComponent, Listener {
         val slotToMove = firstAcceptableItem(inputInventory, inputEnd.data)
         if (slotToMove == -1) return
         val original = inputInventory.getItem(slotToMove)?.clone() ?: return
-        val leftover = transferToOutputs(inputBlock, original, outputs)
+        val leftover = transferToOutputs(inputBlock, inputInventory, original, outputs)
         inputInventory.setItem(
             slotToMove, original.asQuantity(leftover)
         )

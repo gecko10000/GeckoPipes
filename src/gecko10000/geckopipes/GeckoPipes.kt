@@ -13,8 +13,6 @@ import org.bukkit.plugin.java.JavaPlugin
 
 class GeckoPipes : JavaPlugin() {
 
-    val pipeEndKey = NamespacedKey(this, "pipe_end")
-
     private val configFile = YamlFileManager(
         configDirectory = this.dataFolder,
         initialValue = Config(),
@@ -31,15 +29,6 @@ class GeckoPipes : JavaPlugin() {
 
     fun reloadConfigs() {
         configFile.reload()
-    }
-
-    fun pipeItem(): ItemStack {
-        val item = ItemStack.of(Material.CAULDRON)
-        item.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
-        item.editPersistentDataContainer {
-            it.set(pipeEndKey, PersistentDataType.BOOLEAN, true)
-        }
-        return item
     }
 
 }
