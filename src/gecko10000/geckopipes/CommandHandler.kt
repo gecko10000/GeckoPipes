@@ -1,6 +1,6 @@
 package gecko10000.geckopipes
 
-import gecko10000.geckoanvils.di.MyKoinComponent
+import gecko10000.geckopipes.di.MyKoinComponent
 import io.papermc.paper.plugin.lifecycle.event.handler.LifecycleEventHandler
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import net.strokkur.commands.annotations.Aliases

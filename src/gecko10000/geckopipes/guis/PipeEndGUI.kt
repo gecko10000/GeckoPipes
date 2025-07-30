@@ -1,6 +1,6 @@
 package gecko10000.geckopipes.guis
 
-import gecko10000.geckoanvils.di.MyKoinComponent
+import gecko10000.geckopipes.di.MyKoinComponent
 import gecko10000.geckolib.extensions.parseMM
 import gecko10000.geckolib.inventorygui.GUI
 import gecko10000.geckolib.inventorygui.InventoryGUI

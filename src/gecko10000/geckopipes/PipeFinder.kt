@@ -1,6 +1,6 @@
 package gecko10000.geckopipes
 
-import gecko10000.geckoanvils.di.MyKoinComponent
+import gecko10000.geckopipes.di.MyKoinComponent
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.koin.core.component.inject

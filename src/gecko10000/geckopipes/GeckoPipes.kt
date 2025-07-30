@@ -1,14 +1,9 @@
 package gecko10000.geckopipes
 
-import gecko10000.geckoanvils.di.MyKoinContext
 import gecko10000.geckolib.config.YamlFileManager
 import gecko10000.geckopipes.config.Config
+import gecko10000.geckopipes.di.MyKoinContext
 import gecko10000.geckopipes.guis.PipeEndGUIListener
-import io.papermc.paper.datacomponent.DataComponentTypes
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
-import org.bukkit.inventory.ItemStack
-import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 
 class GeckoPipes : JavaPlugin() {

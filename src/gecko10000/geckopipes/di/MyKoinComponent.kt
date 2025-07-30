@@ -1,4 +1,4 @@
-package gecko10000.geckoanvils.di
+package gecko10000.geckopipes.di
 
 import org.koin.core.Koin
 import org.koin.core.component.KoinComponent

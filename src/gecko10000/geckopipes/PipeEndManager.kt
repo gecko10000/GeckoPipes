@@ -1,6 +1,6 @@
 package gecko10000.geckopipes
 
-import gecko10000.geckoanvils.di.MyKoinComponent
+import gecko10000.geckopipes.di.MyKoinComponent
 import gecko10000.geckolib.blockdata.BlockDataManager
 import gecko10000.geckolib.misc.Task
 import gecko10000.geckopipes.config.PipeEndData

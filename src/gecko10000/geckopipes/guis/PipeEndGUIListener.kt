@@ -1,6 +1,6 @@
 package gecko10000.geckopipes.guis
 
-import gecko10000.geckoanvils.di.MyKoinComponent
+import gecko10000.geckopipes.di.MyKoinComponent
 import gecko10000.geckopipes.GeckoPipes
 import gecko10000.geckopipes.PipeEndManager
 import gecko10000.geckopipes.model.PipeEnd
