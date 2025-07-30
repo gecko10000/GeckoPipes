@@ -9,6 +9,7 @@ import gecko10000.storagepots.PotManager
 import gecko10000.storagepots.model.Pot
 import org.bukkit.block.Block
 import org.bukkit.event.Listener
+import org.bukkit.inventory.DoubleChestInventory
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
@@ -56,6 +57,13 @@ class PipeManager : MyKoinComponent, Listener {
         return -1
     }
 
+    // :D I love bukit so gud
+    private fun isSameDoubleChest(inputInv: Inventory?, outputInv: Inventory): Boolean {
+        val inputLeftSide = (inputInv as? DoubleChestInventory)?.leftSide ?: return false
+        val outputLeftSide = (outputInv as? DoubleChestInventory)?.leftSide ?: return false
+        return inputLeftSide == outputLeftSide
+    }
+
     // inputInventory: used to compare with output, in case we're moving to the same place.
     // Necessary for double chests, where comparing the block is not enough.
     private fun transferToOutputs(
@@ -91,8 +99,7 @@ class PipeManager : MyKoinComponent, Listener {
             // Ensure it's an inventory
             val outputInventory = (outputBlock.getState(false) as? InventoryHolder)?.inventory ?: continue
             // If different ends of double chest, skip
-            // TODO: fix?
-            if (inputInventory?.getHolder(false) == outputInventory.getHolder(false)) {
+            if (isSameDoubleChest(inputInventory, outputInventory)) {
                 break
             }
             val leftover = outputInventory.addItem(remaining).values.firstOrNull()
