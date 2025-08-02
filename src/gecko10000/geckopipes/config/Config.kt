@@ -15,11 +15,11 @@ import org.bukkit.Material
 data class Config(
     val inputDisplayMaterial: Material = Material.LIGHT_BLUE_CONCRETE,
     val outputDisplayMaterial: Material = Material.ORANGE_CONCRETE,
-    val pipeGUIName: Component = MM.deserialize("<dark_green>Pipe Cap Options"),
+    val pipeGUIName: Component = MM.deserialize("<dark_green>Pipe Funnel Options"),
     val maxFilterItems: Int = 9,
     val pipeBlocks: Set<Material> = MaterialTags.STAINED_GLASS.values,
     val pipeMoveInterval: Long = 20,
-    val pipeItemName: Component = parseMM("<dark_aqua><b>Pipe Cap"),
+    val pipeItemName: Component = parseMM("<dark_aqua><b>Pipe Funnel"),
     val pipeItemLore: List<Component> = listOf(
         parseMM("<dark_green>Used for managing pipe"),
         parseMM("<dark_green>input and output."),
